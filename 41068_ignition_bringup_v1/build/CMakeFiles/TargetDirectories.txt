@@ -1,9 +1,0 @@
-/home/emil/RS1-Test-UI/41068_ignition_bringup_v1/build/CMakeFiles/uninstall.dir
-/home/emil/RS1-Test-UI/41068_ignition_bringup_v1/build/CMakeFiles/41068_ignition_bringup_uninstall.dir
-/home/emil/RS1-Test-UI/41068_ignition_bringup_v1/build/CMakeFiles/test.dir
-/home/emil/RS1-Test-UI/41068_ignition_bringup_v1/build/CMakeFiles/edit_cache.dir
-/home/emil/RS1-Test-UI/41068_ignition_bringup_v1/build/CMakeFiles/rebuild_cache.dir
-/home/emil/RS1-Test-UI/41068_ignition_bringup_v1/build/CMakeFiles/list_install_components.dir
-/home/emil/RS1-Test-UI/41068_ignition_bringup_v1/build/CMakeFiles/install.dir
-/home/emil/RS1-Test-UI/41068_ignition_bringup_v1/build/CMakeFiles/install/local.dir
-/home/emil/RS1-Test-UI/41068_ignition_bringup_v1/build/CMakeFiles/install/strip.dir
