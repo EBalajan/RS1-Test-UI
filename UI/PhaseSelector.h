@@ -1,5 +1,5 @@
 #pragma once
-#include <SFML/Graphics.hpp>
+#include <SFML/Graphics.h>
 
 enum class AppPhase {
     Selector,

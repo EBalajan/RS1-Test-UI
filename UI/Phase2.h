@@ -1,6 +1,6 @@
 #pragma once
-#include <SFML/Graphics.hpp>
-#include "RobotController.hpp"
+#include <SFML/Graphics.h>
+#include "RobotController.h"
 
 class Phase2 {
 public:

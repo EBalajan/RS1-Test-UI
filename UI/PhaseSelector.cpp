@@ -1,4 +1,4 @@
-#include "PhaseSelector.hpp"
+#include "PhaseSelector.h"
 #include <iostream>
 
 PhaseSelector::PhaseSelector(sf::RenderWindow& window) : window_(window) {

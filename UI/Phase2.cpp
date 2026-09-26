@@ -1,4 +1,4 @@
-#include "Phase2.hpp"
+#include "Phase2.h"
 
 Phase2::Phase2(sf::RenderWindow& window, RobotController& robot)
     : window_(window), robot_(robot) {
