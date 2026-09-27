@@ -39,8 +39,15 @@ class TrailBlazerApp:
     def __init__(self, root):
         self.root = root
         self.root.title("TrailBlazer - Operator GUI")
-        self.root.geometry("1060x680")
-        self.root.resizable(False, False)
+        self.root.geometry("1060x820")
+        self.root.minsize(1060, 780)
+        self.root.resizable(True, True)
+
+        # 'clam' renders consistently across Linux desktop themes; the default
+        # theme on some systems draws ttk widgets (including button labels) as
+        # blank flat bars.
+        style = ttk.Style(root)
+        style.theme_use("clam")
 
         self.state = TrailState()
 

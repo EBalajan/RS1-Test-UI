@@ -54,10 +54,16 @@ class Phase2Frame(ttk.Frame):
 
         controls = ttk.Frame(left)
         controls.pack(fill="x", pady=8)
-        self.obstacle_btn = ttk.Button(controls, text="Place Obstacles (click map)", command=self._toggle_obstacle_mode)
+        button_opts = dict(font=("Arial", 11, "bold"), padx=14, pady=6,
+                           relief="raised", bd=2, cursor="hand2")
+        self.obstacle_btn = tk.Button(controls, text="Place Obstacles (click map)",
+                                       command=self._toggle_obstacle_mode, **button_opts)
         self.obstacle_btn.pack(side="left")
-        ttk.Button(controls, text="Clear Obstacles", command=self._clear_obstacles).pack(side="left", padx=6)
-        self.start_btn = ttk.Button(controls, text="Start Autonomous Inspection", command=self._start_inspection)
+        self._obstacle_btn_default_bg = self.obstacle_btn.cget("bg")
+        tk.Button(controls, text="Clear Obstacles", command=self._clear_obstacles,
+                  **button_opts).pack(side="left", padx=6)
+        self.start_btn = tk.Button(controls, text="Start Autonomous Inspection",
+                                    command=self._start_inspection, **button_opts)
         self.start_btn.pack(side="right")
 
         right = ttk.Frame(main, width=250)
@@ -104,6 +110,12 @@ class Phase2Frame(ttk.Frame):
     # ---------------- obstacle placement ----------------
     def _toggle_obstacle_mode(self):
         self.placing_obstacles = not self.placing_obstacles
+        if self.placing_obstacles:
+            self.obstacle_btn.config(relief="sunken", bg="#c0392b", fg="white",
+                                      text="Placing Obstacles... (click map)")
+        else:
+            self.obstacle_btn.config(relief="raised", bg=self._obstacle_btn_default_bg, fg="black",
+                                      text="Place Obstacles (click map)")
 
     def _on_canvas_click(self, event):
         if not self.placing_obstacles or self.running:

@@ -57,9 +57,14 @@ class Phase1Frame(ttk.Frame):
 
         controls = ttk.Frame(left)
         controls.pack(fill="x", pady=8)
-        ttk.Button(controls, text="Reset Run", command=self._reset_run).pack(side="left")
-        ttk.Button(controls, text="Drop Junction (Space)", command=self._drop_junction).pack(side="left", padx=6)
-        ttk.Button(controls, text="Finish Mapping -> Phase 2", command=self._finish_mapping).pack(side="right")
+        button_opts = dict(font=("Arial", 11, "bold"), padx=14, pady=6,
+                           relief="raised", bd=2, cursor="hand2")
+        tk.Button(controls, text="Reset Run", command=self._reset_run,
+                  **button_opts).pack(side="left")
+        tk.Button(controls, text="Drop Junction (Space)", command=self._drop_junction,
+                  **button_opts).pack(side="left", padx=6)
+        tk.Button(controls, text="Finish Mapping -> Phase 2", command=self._finish_mapping,
+                  **button_opts).pack(side="right")
 
         right = ttk.Frame(main, width=220)
         right.pack(side="left", fill="y", padx=(14, 0))
