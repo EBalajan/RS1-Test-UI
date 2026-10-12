@@ -25,7 +25,7 @@ CANVAS_PX = 760                # on-screen canvas size in pixels (square)
 # Bundled floor texture, shown automatically behind the grid/trail/nodes on
 # both Phase 1 and Phase 2. Kept next to this file so it travels with the
 # package; swap the file to change the map art, no code changes needed.
-BACKGROUND_IMAGE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "floor_texture.png")
+BACKGROUND_IMAGE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Floor_Texture.png")
 
 MAP_BG = "#e7f0e2"            # fallback colour if no background image is loaded
 GRID_COLOR = "#ffffff"          # white reads clearly over both the grass and the lake
@@ -49,9 +49,18 @@ class MapCanvas(tk.Canvas):
         self._load_default_background()
 
     def _load_default_background(self):
-        """Auto-load the bundled floor texture. Quietly does nothing if the
-        file is missing or Pillow isn't installed, so the GUI still runs."""
-        if not PIL_AVAILABLE or not os.path.exists(BACKGROUND_IMAGE_PATH):
+        """Auto-load the bundled floor texture. The GUI still runs without
+        it (falling back to the plain MAP_BG colour), but we always print
+        exactly why it's missing so this isn't a silent, confusing blank
+        map."""
+        if not PIL_AVAILABLE:
+            print("[map_canvas] Background image disabled: Pillow isn't installed. "
+                  "Run: pip install pillow --break-system-packages "
+                  "(or: sudo apt install python3-pil python3-pil.imagetk)")
+            return
+        if not os.path.exists(BACKGROUND_IMAGE_PATH):
+            print(f"[map_canvas] Background image disabled: floor_texture.png not found at "
+                  f"{BACKGROUND_IMAGE_PATH} - make sure it's in the same folder as map_canvas.py.")
             return
         try:
             self.set_background_image(BACKGROUND_IMAGE_PATH)
