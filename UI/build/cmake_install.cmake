@@ -52,6 +52,7 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
     "/home/emil/RS1-Test-UI/UI/map_canvas.py"
     "/home/emil/RS1-Test-UI/UI/phase1_teleop.py"
     "/home/emil/RS1-Test-UI/UI/phase2_inspection.py"
+    "/home/emil/RS1-Test-UI/UI/floor_texture.png"
     )
 endif()
 

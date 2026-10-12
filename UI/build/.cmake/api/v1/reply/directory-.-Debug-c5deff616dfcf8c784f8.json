@@ -48,7 +48,7 @@
 			{
 				"command" : 5,
 				"file" : 0,
-				"line" : 34,
+				"line" : 35,
 				"parent" : 0
 			},
 			{
@@ -248,7 +248,8 @@
 				"state.py",
 				"map_canvas.py",
 				"phase1_teleop.py",
-				"phase2_inspection.py"
+				"phase2_inspection.py",
+				"floor_texture.png"
 			],
 			"type" : "file"
 		},

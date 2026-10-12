@@ -21,6 +21,7 @@ install(FILES
   map_canvas.py
   phase1_teleop.py
   phase2_inspection.py
+  floor_texture.png
   DESTINATION lib/${PROJECT_NAME}
 )
 

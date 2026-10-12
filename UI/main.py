@@ -39,8 +39,12 @@ class TrailBlazerApp:
     def __init__(self, root):
         self.root = root
         self.root.title("TrailBlazer - Operator GUI")
-        self.root.geometry("1060x820")
-        self.root.minsize(1060, 780)
+        # The map canvas is a 760x760 square (representing the 15 m x 15 m
+        # trail area), so the window needs real height to fit it alongside
+        # the title, subtitle and button rows. Resizable with a safe minimum
+        # in case a smaller screen can't fit the default size.
+        self.root.geometry("1060x1020")
+        self.root.minsize(1000, 860)
         self.root.resizable(True, True)
 
         # 'clam' renders consistently across Linux desktop themes; the default

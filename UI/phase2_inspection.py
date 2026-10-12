@@ -20,8 +20,8 @@ from map_canvas import MapCanvas
 from state import TrailState
 
 TICK_MS = 25
-TRAVEL_SPEED = 5
-OBSTACLE_CLEARANCE = 18   # px; an edge counts as blocked if an obstacle is this close to it
+TRAVEL_SPEED = 5           # cm per tick
+OBSTACLE_CLEARANCE = 18    # cm; an edge counts as blocked if an obstacle is this close to it
 
 
 class Phase2Frame(ttk.Frame):
@@ -46,7 +46,8 @@ class Phase2Frame(ttk.Frame):
         left.pack(side="left", fill="both", expand=True)
 
         ttk.Label(left, text="Phase 2 - Autonomous Inspection", font=("Arial", 14, "bold")).pack(anchor="w")
-        ttk.Label(left, text="Review the mapped trail, seed storm obstacles, then run the inspection.").pack(anchor="w", pady=(0, 6))
+        ttk.Label(left, text="15 m x 15 m trail area. Review the mapped trail, seed storm obstacles, "
+                              "then run the inspection.").pack(anchor="w", pady=(0, 6))
 
         self.canvas = MapCanvas(left)
         self.canvas.pack()
@@ -120,8 +121,9 @@ class Phase2Frame(ttk.Frame):
     def _on_canvas_click(self, event):
         if not self.placing_obstacles or self.running:
             return
-        self.state.obstacles.append((event.x, event.y))
-        self._log(f"Obstacle placed at ({event.x}, {event.y})")
+        wx, wy = self.canvas.screen_to_world(event.x, event.y)
+        self.state.obstacles.append((wx, wy))
+        self._log(f"Obstacle placed at ({wx:.0f} cm, {wy:.0f} cm)")
         self._redraw()
 
     def _clear_obstacles(self):

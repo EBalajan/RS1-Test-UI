@@ -17,9 +17,9 @@ from tkinter import ttk, messagebox
 from map_canvas import MapCanvas
 from state import TrailState
 
-SPEED = 4                      # pixels per tick
+SPEED = 4                      # cm per tick (~1.3 m/s at the default tick rate)
 TICK_MS = 30                    # ~33 fps
-MIN_NODE_SPACING = 55           # px between auto-dropped waypoint nodes
+MIN_NODE_SPACING = 55           # cm between auto-dropped waypoint nodes
 DIRECTION_KEYS = {"w": (0, -1), "s": (0, 1), "a": (-1, 0), "d": (1, 0)}
 
 
@@ -47,18 +47,20 @@ class Phase1Frame(ttk.Frame):
         left.pack(side="left", fill="both", expand=True)
 
         ttk.Label(left, text="Phase 1 - Teleop Mapping", font=("Arial", 14, "bold")).pack(anchor="w")
-        ttk.Label(left, text="Drive the rover to map the trail network. Click the map to focus keyboard input.").pack(anchor="w", pady=(0, 6))
+        ttk.Label(left, text="15 m x 15 m trail area. Drive the rover to map it; "
+                              "click the map to focus keyboard input.").pack(anchor="w", pady=(0, 6))
 
-        self.canvas = MapCanvas(left)
+        self.canvas = MapCanvas(left)   # loads the bundled floor texture automatically
         self.canvas.pack()
         self.canvas.bind("<KeyPress>", self._on_key_press)
         self.canvas.bind("<KeyRelease>", self._on_key_release)
         self.canvas.bind("<Button-1>", lambda e: self.canvas.focus_set())
 
-        controls = ttk.Frame(left)
-        controls.pack(fill="x", pady=8)
         button_opts = dict(font=("Arial", 11, "bold"), padx=14, pady=6,
                            relief="raised", bd=2, cursor="hand2")
+
+        controls = ttk.Frame(left)
+        controls.pack(fill="x", pady=8)
         tk.Button(controls, text="Reset Run", command=self._reset_run,
                   **button_opts).pack(side="left")
         tk.Button(controls, text="Drop Junction (Space)", command=self._drop_junction,
