@@ -73,12 +73,16 @@ class TrailBlazerApp:
         self.notebook = ttk.Notebook(root)
         self.notebook.pack(fill="both", expand=True)
 
-        self.phase1 = Phase1Frame(self.notebook, self.state, on_finish_mapping=self._go_to_phase2,
-                                 camera_feed=self.camera_feed)
-        self.phase2 = Phase2Frame(self.notebook, self.state, camera_feed=self.camera_feed)
+        try:
+            self.phase1 = Phase1Frame(self.notebook, self.state, on_finish_mapping=self._go_to_phase2,
+                                     camera_feed=self.camera_feed)
+            self.phase2 = Phase2Frame(self.notebook, self.state, camera_feed=self.camera_feed)
 
-        self.notebook.add(self.phase1, text="Phase 1 - Teleop Mapping")
-        self.notebook.add(self.phase2, text="Phase 2 - Autonomous Inspection")
+            self.notebook.add(self.phase1, text="Phase 1 - Teleop Mapping")
+            self.notebook.add(self.phase2, text="Phase 2 - Autonomous Inspection")
+        except Exception:
+            self.camera_feed.stop()      # don't leave the ROS thread running if startup fails
+            raise
 
         self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)
 

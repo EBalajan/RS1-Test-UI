@@ -19,16 +19,33 @@ STATUS_COLORS = {
 }
 
 
-def _make_placeholder(width, height, text="NO SIGNAL"):
-    image = Image.new("RGB", (width, height), BOX_COLOR)
-    draw = ImageDraw.Draw(image)
+def _load_font(size=22):
+    """Best available font. Older Pillow versions (e.g. Ubuntu 22.04's
+    python3-pil) can't size the built-in font, so try a real TrueType font first."""
+    for name in ("DejaVuSans-Bold.ttf", "DejaVuSans.ttf", "Arial.ttf"):
+        try:
+            return ImageFont.truetype(name, size)
+        except OSError:
+            pass
     try:
-        font = ImageFont.load_default(size=22)
-    except TypeError:               # older Pillow can't size the default font
-        font = ImageFont.load_default()
-    left, top, right, bottom = draw.textbbox((0, 0), text, font=font)
-    draw.text(((width - (right - left)) / 2 - left, (height - (bottom - top)) / 2 - top),
-              text, fill=(150, 150, 150), font=font)
+        return ImageFont.load_default(size=size)
+    except TypeError:               # old Pillow: no size argument
+        return ImageFont.load_default()
+
+
+def _make_placeholder(width, height, text="NO SIGNAL"):
+    """Dark box with 'NO SIGNAL'. Purely cosmetic, so it must never be able to
+    crash the GUI: any font problem just leaves a plain dark box."""
+    image = Image.new("RGB", (width, height), BOX_COLOR)
+    try:
+        font = _load_font()
+        # getmask().size works for bitmap and TrueType fonts on every Pillow
+        # version (textbbox/textsize each fail on some versions).
+        text_w, text_h = font.getmask(text).size
+        ImageDraw.Draw(image).text(((width - text_w) // 2, (height - text_h) // 2),
+                                   text, fill=(150, 150, 150), font=font)
+    except Exception:
+        pass
     return image
 
 
