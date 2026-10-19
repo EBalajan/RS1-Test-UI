@@ -50,9 +50,11 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/trailblazer_gui" TYPE FILE FILES
     "/home/emil/RS1-Test-UI/UI/state.py"
     "/home/emil/RS1-Test-UI/UI/map_canvas.py"
+    "/home/emil/RS1-Test-UI/UI/camera_feed.py"
+    "/home/emil/RS1-Test-UI/UI/camera_panel.py"
     "/home/emil/RS1-Test-UI/UI/phase1_teleop.py"
     "/home/emil/RS1-Test-UI/UI/phase2_inspection.py"
-    "/home/emil/RS1-Test-UI/UI/floor_texture.png"
+    "/home/emil/RS1-Test-UI/UI/Floor_Texture.png"
     )
 endif()
 

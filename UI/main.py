@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 TrailBlazer - Operator GUI (MVP)
 =================================
@@ -24,12 +25,21 @@ their own small methods (`Phase1Frame._move_robot`,
 `Phase2Frame._arrive_at_edge_end`) so they're easy to swap out for the real
 SLAM / Nav2 / perception topics as those work streams come online.
 
+Live camera:
+      Both tabs show a live camera panel fed from the simulation topic
+      /husky1/camera/image (override with the TRAILBLAZER_CAMERA_TOPIC
+      environment variable). Source ROS 2 (and your workspace) in the terminal
+      first; without it the GUI still runs and the panel explains why it has
+      no signal.
+
 Run with:
-    python main.py
+    python3 main.py
 """
+import os
 import tkinter as tk
 from tkinter import ttk
 
+from camera_feed import CameraFeed, DEFAULT_TOPIC
 from state import TrailState
 from phase1_teleop import Phase1Frame
 from phase2_inspection import Phase2Frame
@@ -43,8 +53,8 @@ class TrailBlazerApp:
         # trail area), so the window needs real height to fit it alongside
         # the title, subtitle and button rows. Resizable with a safe minimum
         # in case a smaller screen can't fit the default size.
-        self.root.geometry("1060x1020")
-        self.root.minsize(1000, 860)
+        self.root.geometry("1140x1020")
+        self.root.minsize(1100, 860)
         self.root.resizable(True, True)
 
         # 'clam' renders consistently across Linux desktop themes; the default
@@ -55,16 +65,26 @@ class TrailBlazerApp:
 
         self.state = TrailState()
 
+        # One ROS camera subscriber shared by both tabs.
+        self.camera_feed = CameraFeed(os.environ.get("TRAILBLAZER_CAMERA_TOPIC", DEFAULT_TOPIC))
+        self.camera_feed.start()
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+
         self.notebook = ttk.Notebook(root)
         self.notebook.pack(fill="both", expand=True)
 
-        self.phase1 = Phase1Frame(self.notebook, self.state, on_finish_mapping=self._go_to_phase2)
-        self.phase2 = Phase2Frame(self.notebook, self.state)
+        self.phase1 = Phase1Frame(self.notebook, self.state, on_finish_mapping=self._go_to_phase2,
+                                 camera_feed=self.camera_feed)
+        self.phase2 = Phase2Frame(self.notebook, self.state, camera_feed=self.camera_feed)
 
         self.notebook.add(self.phase1, text="Phase 1 - Teleop Mapping")
         self.notebook.add(self.phase2, text="Phase 2 - Autonomous Inspection")
 
         self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)
+
+    def on_close(self):
+        self.camera_feed.stop()          # shuts the ROS subscriber down cleanly
+        self.root.destroy()
 
     def _go_to_phase2(self):
         self.phase2.refresh_from_state()

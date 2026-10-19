@@ -19,9 +19,11 @@ install(PROGRAMS
 install(FILES
   state.py
   map_canvas.py
+  camera_feed.py
+  camera_panel.py
   phase1_teleop.py
   phase2_inspection.py
-  floor_texture.png
+  Floor_Texture.png
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -1,11 +1,12 @@
 """
 Shared canvas drawing helpers for the trail map, used by both GUI phases.
 
-The map represents a real 15 m x 15 m survey area. Internally every
-position (robot, nodes, obstacles) is stored in real-world CENTIMETRES on
-a 0-1500 x 0-1500 grid, so distances, speeds and clearances all have an
-actual physical meaning and line up with whatever SLAM / Nav2 coordinates
-come in later. The canvas widget itself is kept at a smaller, screen
+The map represents a real 15 m x 15 m survey area with the ORIGIN (0, 0) AT
+THE CENTRE. Internally every position (robot, nodes, obstacles) is stored in
+real-world CENTIMETRES: x runs -750 .. +750 (left to right) and y runs
+-750 .. +750 (bottom to top, like a ROS map frame), so distances, speeds and
+clearances have a physical meaning and line up with the simulation, where the
+Husky spawns at (0, 0). The canvas widget itself is kept at a smaller, screen
 friendly pixel size, and a scale factor converts world cm -> screen px for
 drawing (and back again for mouse clicks), so the map stays usable on any
 monitor regardless of the 1500x1500 logical size.
@@ -29,6 +30,7 @@ BACKGROUND_IMAGE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 
 MAP_BG = "#e7f0e2"            # fallback colour if no background image is loaded
 GRID_COLOR = "#ffffff"          # white reads clearly over both the grass and the lake
+AXIS_COLOR = "#ffffff"          # X/Y axes through the origin (solid, thicker than the grid)
 TRAIL_COLOR = "#fff176"         # bright yellow dashes stay visible over any terrain
 NODE_RADIUS = 6                 # screen pixels - marker size, not world-scaled
 ROBOT_RADIUS = 8
@@ -59,7 +61,7 @@ class MapCanvas(tk.Canvas):
                   "(or: sudo apt install python3-pil python3-pil.imagetk)")
             return
         if not os.path.exists(BACKGROUND_IMAGE_PATH):
-            print(f"[map_canvas] Background image disabled: floor_texture.png not found at "
+            print(f"[map_canvas] Background image disabled: Floor_Texture.png not found at "
                   f"{BACKGROUND_IMAGE_PATH} - make sure it's in the same folder as map_canvas.py.")
             return
         try:
@@ -69,16 +71,18 @@ class MapCanvas(tk.Canvas):
 
     # ---------- world (cm) <-> screen (px) ----------
     def world_to_screen(self, x, y):
-        return x * self.scale, y * self.scale
+        """World cm (origin at centre, +y up) -> canvas pixels (origin top-left, +y down)."""
+        half = self.world_size / 2
+        return (x + half) * self.scale, (half - y) * self.scale
 
     def screen_to_world(self, x, y):
-        return x / self.scale, y / self.scale
+        half = self.world_size / 2
+        return x / self.scale - half, half - y / self.scale
 
     def clamp(self, x, y, margin_cm=14):
         """Clamp a world-space (cm) position to stay inside the map."""
-        x = max(margin_cm, min(self.world_size - margin_cm, x))
-        y = max(margin_cm, min(self.world_size - margin_cm, y))
-        return x, y
+        limit = self.world_size / 2 - margin_cm
+        return max(-limit, min(limit, x)), max(-limit, min(limit, y))
 
     # ---------- background image ----------
     def set_background_image(self, path):
@@ -100,18 +104,29 @@ class MapCanvas(tk.Canvas):
 
     # ---------- grid ----------
     def _draw_grid(self, spacing_cm=100):
-        """Grid lines every spacing_cm of real-world distance (default 1 m,
-        so the 15 m x 15 m map shows a clean 15x15 grid)."""
+        """Grid lines every spacing_cm (default 1 m) of world distance, lined up
+        with the origin, plus highlighted X/Y axes crossing at (0, 0)."""
         self.delete("grid")
-        step_px = spacing_cm * self.scale
-        x = 0.0
-        while x <= self.display_px + 0.01:
-            self.create_line(x, 0, x, self.display_px, fill=GRID_COLOR, stipple="gray50", tag="grid")
-            x += step_px
-        y = 0.0
-        while y <= self.display_px + 0.01:
-            self.create_line(0, y, self.display_px, y, fill=GRID_COLOR, stipple="gray50", tag="grid")
-            y += step_px
+        half = self.world_size / 2
+        value = -((half // spacing_cm) * spacing_cm)       # first multiple inside the map
+        while value <= half:
+            sx, _ = self.world_to_screen(value, 0)
+            _, sy = self.world_to_screen(0, value)
+            if value != 0:
+                self.create_line(sx, 0, sx, self.display_px, fill=GRID_COLOR, stipple="gray50", tag="grid")
+                self.create_line(0, sy, self.display_px, sy, fill=GRID_COLOR, stipple="gray50", tag="grid")
+            value += spacing_cm
+
+        ox, oy = self.world_to_screen(0, 0)
+        self.create_line(ox, 0, ox, self.display_px, fill=AXIS_COLOR, width=2, tag="grid")
+        self.create_line(0, oy, self.display_px, oy, fill=AXIS_COLOR, width=2, tag="grid")
+        label_font = ("Arial", 9, "bold")
+        self.create_text(ox + 6, oy + 6, text="(0, 0)", anchor="nw", fill=AXIS_COLOR,
+                         font=label_font, tag="grid")
+        self.create_text(self.display_px - 6, oy - 6, text="+X", anchor="se", fill=AXIS_COLOR,
+                         font=label_font, tag="grid")
+        self.create_text(ox + 6, 6, text="+Y", anchor="nw", fill=AXIS_COLOR,
+                         font=label_font, tag="grid")
         self.tag_lower("grid")
 
     def draw_trail(self, points, tag="trail"):

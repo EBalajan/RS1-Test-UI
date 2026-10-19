@@ -16,6 +16,7 @@ with the incoming detection result and keep the edge-coloring / backtrack
 import tkinter as tk
 from tkinter import ttk
 
+from camera_panel import CameraPanel
 from map_canvas import MapCanvas
 from state import TrailState
 
@@ -25,9 +26,10 @@ OBSTACLE_CLEARANCE = 18    # cm; an edge counts as blocked if an obstacle is thi
 
 
 class Phase2Frame(ttk.Frame):
-    def __init__(self, parent, state: TrailState):
+    def __init__(self, parent, state: TrailState, camera_feed=None):
         super().__init__(parent)
         self.state = state
+        self.camera_feed = camera_feed
         self.placing_obstacles = False
         self.running = False
         self.robot_x = self.robot_y = 0
@@ -67,7 +69,7 @@ class Phase2Frame(ttk.Frame):
                                     command=self._start_inspection, **button_opts)
         self.start_btn.pack(side="right")
 
-        right = ttk.Frame(main, width=250)
+        right = ttk.Frame(main)
         right.pack(side="left", fill="y", padx=(14, 0))
 
         ttk.Label(right, text="Status", font=("Arial", 11, "bold")).pack(anchor="w")
@@ -83,10 +85,13 @@ class Phase2Frame(ttk.Frame):
                   text="Black = unvisited route\nGreen = clear / passed\n"
                        "Red = blocked by obstacle\nRed X = detected obstacle").pack(anchor="w", pady=(0, 10))
 
+        if self.camera_feed is not None:
+            CameraPanel(right, self.camera_feed).pack(anchor="w", pady=(0, 10))
+
         ttk.Label(right, text="Inspection Log", font=("Arial", 11, "bold")).pack(anchor="w")
         log_frame = ttk.Frame(right)
         log_frame.pack(fill="both", expand=True)
-        self.log_box = tk.Listbox(log_frame, height=18, width=34)
+        self.log_box = tk.Listbox(log_frame, height=8, width=34)
         self.log_box.pack(side="left", fill="both", expand=True)
         scroll = ttk.Scrollbar(log_frame, command=self.log_box.yview)
         scroll.pack(side="right", fill="y")

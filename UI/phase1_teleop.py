@@ -6,6 +6,9 @@ W / A / S / D (forward / left / backward / right). As the rover moves,
 waypoint nodes are dropped automatically along the trail, and the operator
 can drop an explicit "trail junction" node at any time with SPACE.
 
+Coordinates are real-world centimetres with the origin (0, 0) at the centre
+of the 15 m x 15 m map, +x to the right and +y up (so W moves +y).
+
 Swap-out point for the real system: `_move_robot` currently moves the robot
 directly from key state. Once real teleop + SLAM odometry is available,
 replace the body of `_move_robot` with the incoming pose from that topic
@@ -14,24 +17,29 @@ and keep the node-dropping logic below it unchanged.
 import tkinter as tk
 from tkinter import ttk, messagebox
 
+from camera_panel import CameraPanel
 from map_canvas import MapCanvas
 from state import TrailState
 
 SPEED = 4                      # cm per tick (~1.3 m/s at the default tick rate)
 TICK_MS = 30                    # ~33 fps
 MIN_NODE_SPACING = 55           # cm between auto-dropped waypoint nodes
-DIRECTION_KEYS = {"w": (0, -1), "s": (0, 1), "a": (-1, 0), "d": (1, 0)}
+START_X, START_Y = 0, 0         # cm; the map centre, which is also where the Husky spawns in the sim
+# +y is UP on the map (ROS convention), so W is +y and S is -y
+DIRECTION_KEYS = {"w": (0, 1), "s": (0, -1), "a": (-1, 0), "d": (1, 0)}
 
 
 class Phase1Frame(ttk.Frame):
-    def __init__(self, parent, state: TrailState, on_finish_mapping):
+    def __init__(self, parent, state: TrailState, on_finish_mapping, camera_feed=None):
         super().__init__(parent)
         self.state = state
         self.on_finish_mapping = on_finish_mapping
+        self.camera_feed = camera_feed
 
         self.pressed_keys = set()
         self.last_direction = None
-        self.robot_x, self.robot_y = 60, 60
+        self._tick_job = None
+        self.robot_x, self.robot_y = START_X, START_Y
         self.distance_since_last_node = 0.0
         self.running = False
 
@@ -68,7 +76,7 @@ class Phase1Frame(ttk.Frame):
         tk.Button(controls, text="Finish Mapping -> Phase 2", command=self._finish_mapping,
                   **button_opts).pack(side="right")
 
-        right = ttk.Frame(main, width=220)
+        right = ttk.Frame(main)
         right.pack(side="left", fill="y", padx=(14, 0))
 
         ttk.Label(right, text="Controls", font=("Arial", 11, "bold")).pack(anchor="w")
@@ -81,22 +89,29 @@ class Phase1Frame(ttk.Frame):
         ttk.Label(right, textvariable=self.pos_var).pack(anchor="w")
         ttk.Label(right, textvariable=self.node_var).pack(anchor="w", pady=(0, 12))
 
+        if self.camera_feed is not None:
+            CameraPanel(right, self.camera_feed).pack(anchor="w", pady=(0, 12))
+
         ttk.Label(right, text="Legend", font=("Arial", 11, "bold")).pack(anchor="w")
         ttk.Label(right, justify="left",
-                  text="Dashed grey = travelled trail\nBlue dot = junction node\n"
+                  text="Dashed yellow = travelled trail\nBlue dot = junction node\n"
                        "Light dot = waypoint node\nDark circle = rover").pack(anchor="w")
 
     # ---------------- run lifecycle ----------------
     def _reset_run(self):
         self.state.reset()
-        self.robot_x, self.robot_y = 60, 60
+        self.robot_x, self.robot_y = START_X, START_Y
         self.distance_since_last_node = 0.0
         self.last_direction = None
         self.state.add_node(self.robot_x, self.robot_y, kind="junction")  # ranger station / start
         self._redraw()
         self.running = True
         self.canvas.focus_set()
-        self.after(TICK_MS, self._tick)
+        # Cancel any loop that's already running so pressing "Reset Run" can't
+        # stack up extra loops (which would make the rover drive faster each time).
+        if self._tick_job is not None:
+            self.after_cancel(self._tick_job)
+        self._tick_job = self.after(TICK_MS, self._tick)
 
     def _finish_mapping(self):
         if len(self.state.nodes) < 2:
@@ -125,7 +140,7 @@ class Phase1Frame(ttk.Frame):
             return
         self._move_robot()
         self._redraw()
-        self.after(TICK_MS, self._tick)
+        self._tick_job = self.after(TICK_MS, self._tick)
 
     def _move_robot(self):
         dx = dy = 0
@@ -168,5 +183,5 @@ class Phase1Frame(ttk.Frame):
         self.canvas.draw_trail(self.state.trail_points)
         self.canvas.draw_nodes(self.state.nodes)
         self.canvas.draw_robot(self.robot_x, self.robot_y)
-        self.pos_var.set(f"Position: ({int(self.robot_x)}, {int(self.robot_y)})")
+        self.pos_var.set(f"Position: ({int(self.robot_x)}, {int(self.robot_y)}) cm")
         self.node_var.set(f"Nodes recorded: {len(self.state.nodes)}")
