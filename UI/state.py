@@ -5,7 +5,15 @@ These classes hold the state that both the Phase 1 (teleop mapping) and
 Phase 2 (autonomous inspection) tabs read from and write to, so a trail
 mapped in Phase 1 can be handed straight over to Phase 2.
 """
+import json
 import math
+import os
+
+
+# Where the trail map is saved when mapping is finished, and loaded from by
+# "Continue where you left off". Kept next to the code. Always read this
+# through the module (state.SAVED_MAP_PATH) so it can be pointed elsewhere.
+SAVED_MAP_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_map.json")
 
 
 class Node:
@@ -85,3 +93,54 @@ class TrailState:
             return 0.0
         done = sum(1 for e in self.edges if e.status != "unvisited")
         return 100.0 * done / len(self.edges)
+
+    # ---------------- saving / loading the trail map ----------------
+    def to_dict(self):
+        """The trail as plain data: nodes in creation order (edges follow from
+        the order). Positions are centimetres, origin at the map centre, +y up."""
+        return {
+            "version": 1,
+            "units": "cm",
+            "frame": "origin at map centre, +x right, +y up",
+            "nodes": [{"x": round(n.x, 1), "y": round(n.y, 1), "kind": n.kind} for n in self.nodes],
+        }
+
+    def load_dict(self, data):
+        """Replace the current trail with the nodes in `data` (see to_dict).
+        Raises ValueError if the data isn't a usable map."""
+        try:
+            nodes = [(float(n["x"]), float(n["y"]), str(n.get("kind", "waypoint"))) for n in data["nodes"]]
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError(f"saved map is not in the expected format ({exc})")
+        if len(nodes) < 2:
+            raise ValueError("saved map needs at least 2 nodes")
+        self.reset()
+        for x, y, kind in nodes:
+            self.add_node(x, y, kind=kind)
+
+
+def save_map(state, path=None):
+    path = path or SAVED_MAP_PATH
+    with open(path, "w") as f:
+        json.dump(state.to_dict(), f, indent=2)
+
+
+def load_map(state, path=None):
+    """Load the saved trail into `state`. Raises FileNotFoundError if there is
+    no saved map yet, ValueError if it can't be read."""
+    path = path or SAVED_MAP_PATH
+    with open(path) as f:
+        try:
+            data = json.load(f)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"saved map isn't valid JSON ({exc})")
+    state.load_dict(data)
+
+
+def saved_map_node_count(path=None):
+    """Number of nodes in the saved map, or None if there isn't a usable one."""
+    try:
+        with open(path or SAVED_MAP_PATH) as f:
+            return len(json.load(f)["nodes"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return None

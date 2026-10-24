@@ -21,6 +21,10 @@ install(FILES
   map_canvas.py
   camera_feed.py
   camera_panel.py
+  ros_context.py
+  robot_pose.py
+  sim_obstacles.py
+  start_screen.py
   phase1_teleop.py
   phase2_inspection.py
   Floor_Texture.png

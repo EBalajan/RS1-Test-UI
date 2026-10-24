@@ -48,6 +48,8 @@ except Exception as exc:                  # normally ImportError; never let it c
     ROS_AVAILABLE = False
     _ROS_IMPORT_ERROR = str(exc)
 
+import ros_context
+
 DEFAULT_TOPIC = "/husky1/camera/image"
 STALE_AFTER_S = 3.0                       # camera runs ~3 Hz, so 3 s of silence = problem
 
@@ -105,7 +107,7 @@ class CameraFeed:
         self._thread = None
         self._node = None
         self._executor = None
-        self._owns_rclpy = False
+        self._holds_context = False
 
     # ---------------- lifecycle ----------------
     def start(self):
@@ -122,9 +124,8 @@ class CameraFeed:
             return False
 
         try:
-            if not rclpy.ok():
-                rclpy.init()
-                self._owns_rclpy = True
+            ros_context.acquire()
+            self._holds_context = True
             self._node = Node(f"trailblazer_gui_camera_{os.getpid()}")
             # Sensor-data QoS (best effort) can connect to both best-effort and
             # reliable publishers, so it works however the bridge is configured.
@@ -154,13 +155,13 @@ class CameraFeed:
                 self._executor.shutdown()
             if self._node is not None:
                 self._node.destroy_node()
-            if self._owns_rclpy and ROS_AVAILABLE and rclpy.ok():
-                rclpy.shutdown()
         except Exception:
             pass
+        if self._holds_context:
+            ros_context.release()
+            self._holds_context = False
         self._executor = None
         self._node = None
-        self._owns_rclpy = False
 
     def _spin(self):
         while not self._stop_event.is_set():
